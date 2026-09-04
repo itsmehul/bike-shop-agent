@@ -19,6 +19,10 @@ import { cn } from "@/lib/utils";
 import { AgentMessage } from "./agent-message";
 
 const AGENT_NAME = "Spoke & Mirror";
+const WHATSAPP_NUMBER =
+  process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "+91 99300 55435";
+const WHATSAPP_E164 = WHATSAPP_NUMBER.replace(/\D/g, "");
+const WHATSAPP_HREF = `https://wa.me/${WHATSAPP_E164}`;
 
 type AgentStatus = ReturnType<typeof useEveAgent>["status"];
 
@@ -121,7 +125,23 @@ export function AgentChat() {
             : "max-w-3xl shrink-0 pb-6",
         )}
       >
-        {isEmpty ? <h1 className="font-medium text-5xl tracking-tighter">{AGENT_NAME}</h1> : null}
+        {isEmpty ? (
+          <div className="flex flex-col items-center gap-3 text-center">
+            <h1 className="font-medium text-5xl tracking-tighter">{AGENT_NAME}</h1>
+            <p className="max-w-sm text-muted-foreground text-sm leading-relaxed">
+              Same front desk on WhatsApp — text{" "}
+              <a
+                className="font-medium text-foreground underline decoration-muted-foreground/50 underline-offset-4 hover:decoration-foreground"
+                href={WHATSAPP_HREF}
+                rel="noreferrer"
+                target="_blank"
+              >
+                {WHATSAPP_NUMBER}
+              </a>{" "}
+              or chat here.
+            </p>
+          </div>
+        ) : null}
         <div className="w-full">{composer}</div>
       </div>
     </main>

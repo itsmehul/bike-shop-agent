@@ -20,6 +20,7 @@
     "start:eve": "eve start"
   },
   "dependencies": {
+    "@openrouter/ai-sdk-provider": "^3.0.0",
     "@radix-ui/react-use-controllable-state": "1.2.2",
     "@shikijs/core": "4.1.0",
     "@shikijs/engine-javascript": "4.1.0",
@@ -46,6 +47,7 @@
     "streamdown": "2.5.0",
     "tailwind-merge": "3.6.0",
     "tailwindcss": "4.3.0",
+    "unipile-node-sdk": "^1.9.3",
     "use-stick-to-bottom": "1.1.4",
     "zod": "4.4.3"
   },
@@ -53,6 +55,7 @@
     "@types/node": "24.x",
     "@types/react": "19.2.15",
     "@types/react-dom": "19.2.3",
+    "just-bash": "^3.4.2",
     "typescript": "6.0.3"
   },
   "overrides": {
