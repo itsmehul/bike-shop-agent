@@ -16,7 +16,7 @@ export default defineTool({
   description:
     "Run one of the signed-in user's durable custom tools by slug. " +
     "Prefer the direct user__<slug> tool when it is listed; use this if it is not. " +
-    "Do not reimplement the tool with bash — call this (or user__*) instead.",
+    "Do not reimplement the tool with bash or ad-hoc python — call this (or user__*) instead.",
   inputSchema: z.object({
     slug: z
       .string()

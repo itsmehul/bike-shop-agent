@@ -269,6 +269,23 @@ export default defineChannel<WhatsAppState, WhatsAppContext, { chatId: string }>
       }
     },
 
+    "turn.failed"(eventData, channel) {
+      const chatId = channel.chatId || channel.continuation?.token;
+      if (!chatId) return;
+      console.error("[whatsapp] turn failed", eventData);
+      void safeReply(
+        chatId,
+        "Sorry — I hit a snag working on that. Send your message again, or reply /new to start fresh.",
+      );
+    },
+
+    "turn.cancelled"(eventData, channel) {
+      const chatId = channel.chatId || channel.continuation?.token;
+      if (!chatId) return;
+      console.error("[whatsapp] turn cancelled", eventData);
+      void safeReply(chatId, "Stopped. Send another message whenever you're ready.");
+    },
+
     "session.failed"(eventData, channel) {
       const chatId = channel.chatId || channel.continuation?.token;
       if (!chatId) return;

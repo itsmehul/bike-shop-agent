@@ -36,7 +36,7 @@ export default defineDynamic({
 
         const name = toolNameForSlug(slug);
         map[name] = defineTool({
-          description: `${description} (user-authored sandbox bash tool).`,
+          description: `${description} (user-authored sandbox Python tool).`,
           // Plain JSON Schema object; cast satisfies eve's JsonObject overload.
           inputSchema: inputSchema as { type: "object" },
           async execute(input, toolCtx) {

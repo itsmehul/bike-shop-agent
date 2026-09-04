@@ -13,7 +13,7 @@ import {
 
 export default defineTool({
   description:
-    "Update a durable custom tool for the signed-in user (description, input schema, and/or bash script). " +
+    "Update a durable custom tool for the signed-in user (description, input schema, and/or Python script). " +
     "Requires approval before save.",
   inputSchema: z.object({
     slug: z.string().describe("Existing tool slug (without the user__ prefix)."),
@@ -24,7 +24,12 @@ export default defineTool({
       .describe(
         "Replacement JSON Schema for inputs as an object or JSON string.",
       ),
-    script: z.string().optional().describe("Replacement bash script body."),
+    script: z
+      .string()
+      .optional()
+      .describe(
+        "Replacement Python 3 script body. Reads args via json.load(open(sys.argv[1])).",
+      ),
   }),
   approval: always(),
   async execute({ slug, description, inputSchema, script }, ctx) {

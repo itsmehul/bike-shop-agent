@@ -105,9 +105,9 @@ export function loadPrincipalTool(
 }
 
 /**
- * Write the bash script + args into the sandbox and run it.
- * Scalars are exported as ARG_<key> env vars (easy in just-bash).
- * Full JSON is also available as $1 (file path) and TOOL_INPUT (string).
+ * Write a Python script + JSON args into the sandbox and run with python3.
+ * Scripts read args via: `args = json.load(open(sys.argv[1]))`
+ * Egress is opened only for the duration of the run (sandbox default stays deny-all).
  */
 export async function runUserToolScript(options: {
   slug: string;
@@ -122,52 +122,47 @@ export async function runUserToolScript(options: {
   const { slug, script, input, ctx } = options;
   const sandbox = await ctx.getSandbox();
   const safeCall = ctx.callId.replace(/[^a-zA-Z0-9_-]/g, "_") || "call";
-  const scriptPath = `.user-tools/bin/${slug}.sh`;
+  const scriptPath = `.user-tools/bin/${slug}.py`;
   const argsPath = `.user-tools/args/${safeCall}.json`;
-  const envPath = `.user-tools/args/${safeCall}.env`;
 
   const payload = input ?? {};
-  await sandbox.writeTextFile({ path: scriptPath, content: script });
+  await sandbox.writeTextFile({
+    path: scriptPath,
+    content: normalizePythonScript(script),
+  });
   await sandbox.writeTextFile({
     path: argsPath,
     content: JSON.stringify(payload),
   });
-  await sandbox.writeTextFile({
-    path: envPath,
-    content: buildArgEnvFile(payload),
-  });
 
-  // Validated slug + sanitized call id only — no user-controlled shell bits.
-  const result = await sandbox.run({
-    command: `set -a; . ${envPath}; set +a; export TOOL_INPUT="$(cat ${argsPath})"; bash ${scriptPath} ${argsPath}`,
-  });
+  // Open egress only while the user script runs, then lock the sandbox again.
+  await sandbox.setNetworkPolicy("deny-all");
+  try {
+    // Validated slug + sanitized call id only — no user-controlled shell bits.
+    const result = await sandbox.run({
+      command: `python3 ${scriptPath} ${argsPath}`,
+    });
 
-  const exitCode =
-    typeof result.exitCode === "number" ? result.exitCode : result.stderr ? 1 : 0;
+    const exitCode =
+      typeof result.exitCode === "number"
+        ? result.exitCode
+        : result.stderr
+          ? 1
+          : 0;
 
-  return {
-    exitCode,
-    stdout: typeof result.stdout === "string" ? result.stdout : "",
-    stderr: typeof result.stderr === "string" ? result.stderr : "",
-  };
-}
-
-/** Shell-safe ARG_* exports for scalar JSON fields. */
-function buildArgEnvFile(input: Record<string, unknown>): string {
-  const lines: string[] = [];
-  for (const [key, value] of Object.entries(input)) {
-    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) continue;
-    if (
-      typeof value === "string" ||
-      typeof value === "number" ||
-      typeof value === "boolean"
-    ) {
-      lines.push(`ARG_${key}=${shellSingleQuote(String(value))}`);
-    }
+    return {
+      exitCode,
+      stdout: typeof result.stdout === "string" ? result.stdout : "",
+      stderr: typeof result.stderr === "string" ? result.stderr : "",
+    };
+  } finally {
+    await sandbox.setNetworkPolicy("deny-all");
   }
-  return lines.length > 0 ? `${lines.join("\n")}\n` : "# no scalar args\n";
 }
 
-function shellSingleQuote(value: string): string {
-  return `'${value.replace(/'/g, `'\\''`)}'`;
+/** Ensure the body is a runnable .py file (add shebang if missing). */
+function normalizePythonScript(script: string): string {
+  const trimmed = script.trim();
+  if (trimmed.startsWith("#!")) return `${trimmed}\n`;
+  return `#!/usr/bin/env python3\n${trimmed}\n`;
 }

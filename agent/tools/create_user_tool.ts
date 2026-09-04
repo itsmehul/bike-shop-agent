@@ -14,29 +14,29 @@ import {
 
 export default defineTool({
   description:
-    "Create a durable custom tool for the signed-in user from a bash script. " +
-    "Draft slug, description, JSON Schema inputs, and a bash script that reads " +
-    "scalar args from $ARG_<field> (preferred) or JSON via jq/TOOL_INPUT/$1. " +
-    "Example: awk -v nm=\"$ARG_nm\" 'BEGIN{printf \"%.4f\\n\", nm*8.850745791}'. " +
-    "Requires approval. After save, call run_user_tool or user__<slug> — never raw bash for the same job.",
+    "Create a durable custom tool for the signed-in user from a Python script. " +
+    "Use for calculators, converters, scrapers, fetchers, and other helpers the user asks for — " +
+    "not limited to bike-shop tasks. Draft slug, description, JSON Schema inputs, and a Python 3 script " +
+    'that reads args with: args = json.load(open(sys.argv[1])). For HTTP use urllib.request (stdlib). ' +
+    "Network is available while the tool runs. Requires approval. After save, call run_user_tool or user__<slug>.",
   inputSchema: z.object({
     slug: z
       .string()
-      .describe('Short id, e.g. "nm_to_inlb". Becomes tool name user__<slug>.'),
+      .describe('Short id, e.g. "nm_to_inlb" or "scrape_gallery_jobs". Becomes tool name user__<slug>.'),
     description: z
       .string()
       .describe("What the tool does, written for the model that will call it."),
     inputSchema: z
       .union([z.string(), z.record(z.string(), z.unknown())])
       .describe(
-        'JSON Schema for inputs as an object or JSON string. Example: {"type":"object","properties":{"nm":{"type":"number"}},"required":["nm"]}.',
+        'JSON Schema for inputs as an object or JSON string. Example: {"type":"object","properties":{"url":{"type":"string"}},"required":["url"]}.',
       ),
     script: z
       .string()
       .describe(
-        "Bash script body. Prefer $ARG_<field> for scalars (exported by the runtime). " +
-          "Also available: TOOL_INPUT (JSON string), $1 (path to JSON file), jq. " +
-          "Print the result on stdout. Sandbox only — no network or shop APIs.",
+        "Python 3 script body. Runtime invokes: python3 script.py <args.json>. " +
+          "Read inputs with json.load(open(sys.argv[1])). Print the result on stdout. " +
+          "HTTP via urllib.request is allowed during the run.",
       ),
   }),
   approval: always(),
