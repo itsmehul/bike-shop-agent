@@ -19,6 +19,9 @@ next-env.d.ts
 # local tooling
 /.claude/settings.local.json
 
+# local durable data (user-generated tools, etc.)
+/.data
+
 # os / editor
 .DS_Store
 *.log

@@ -1,8 +1,13 @@
 import { defineSandbox } from "eve/sandbox";
-import { justbash } from "eve/sandbox/just-bash";
+import { vercel } from "eve/sandbox/vercel";
 
-// Pin just-bash locally so WhatsApp (and web) turns don't depend on Docker
-// pulling ghcr.io/vercel/eve. The workspace/ seed still mounts as /workspace.
+// Hosted Vercel Sandbox (real Linux microVM). Requires Vercel project
+// credentials locally: `vercel link` then `vercel env pull` so
+// VERCEL_OIDC_TOKEN is available. On Vercel deploys, OIDC is automatic.
+// deny-all: user-generated tools stay offline (no egress).
 export default defineSandbox({
-  backend: justbash(),
+  backend: vercel({
+    networkPolicy: "deny-all",
+    resources: { vcpus: 2 },
+  }),
 });
